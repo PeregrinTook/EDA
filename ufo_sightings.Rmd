@@ -24,8 +24,7 @@ UFOs(Unidentified Flying Objects), sometimes referred to as "flying saucers" are
 So we take a look at the data to get an idea about the number of UFO sightings across the world, and throughout the years. The dataset contains two csv files, namely "complete.csv" and "scrubbed.csv".The complete data includes entries where the location of the sighting was not found or blank (0.8146%) or have an erroneous or blank time (8.0237%). Since the reports date back to the 20th century, some older data might be obscured. Data contains city, state, time, description, and duration of each sighting. We use the "complete.csv" file to read data into a data fram and remove the "NA" values for City and Datetime. However, we still kepe the data where Country or State value was missing, cause those are still valid sightings.
 
 ```{r, message=FALSE, warning=FALSE}
-ufo_ <- 
-read_csv("complete.csv")
+ufo_ <- read_csv("complete.csv")
 ufo <- as.data.frame(ufo_)
 
 print_ <- ufo %>%
