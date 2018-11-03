@@ -1,0 +1,89 @@
+---
+title: "UFO Sightings"
+author: "Peregrin Took"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(maps)
+library(mapproj)
+library(ggmap)
+library(lubridate)
+library(png)
+require(scales)
+```
+
+The UFO Sightings data available on Kaggle from National UFO Reporting Center (NUFORC) has been used for this purpose. This dataset contains over 80,000 reports of UFO sightings over the last century. Source: https://www.kaggle.com/NUFORC/ufo-sightings  
+
+UFOs(Unidentified Flying Objects), sometimes referred to as "flying saucers" are unusual or unconventional objects observed in the sky which are often claimed to be Extraterrestrial, or "alien" spacecrafts. Quite naturally, there's a lot of interest, folk-lore and conspiracy theories surrounding UFOs. Although most UFO observations have been later proven to be just misidentified mundane objects or natural henomena, the excitement still seems to be intact surrounding them.  
+
+So we take a look at the data to get an idea about the number of UFO sightings across the world, and throughout the years. The dataset contains two csv files, namely "complete.csv" and "scrubbed.csv".The complete data includes entries where the location of the sighting was not found or blank (0.8146%) or have an erroneous or blank time (8.0237%). Since the reports date back to the 20th century, some older data might be obscured. Data contains city, state, time, description, and duration of each sighting. We use the "complete.csv" file to read data into a data fram and remove the "NA" values for City and Datetime. However, we still kepe the data where Country or State value was missing, cause those are still valid sightings.
+
+```{r, message=FALSE, warning=FALSE}
+ufo_ <- 
+read_csv("complete.csv")
+ufo <- as.data.frame(ufo_)
+
+print_ <- ufo %>%
+  select(-comments)
+
+head(print_, 10)
+```
+  
+The "coments" column has been removed for printing this table, as it contains large strings, printing outside of page.
+
+```{r, message=FALSE, warning=FALSE}
+ufo %>%
+  mutate(dates = year(mdy_hm(datetime))) %>%
+  group_by(dates) %>% 
+  ggplot() +
+  geom_bar(aes(x = dates), color = "deepskyblue", fill = "dodgerblue3") +
+  labs(x = "Year", y = "Count", 
+       title = "Fig: Distribution of UFO sightings over the last century")
+
+```
+
+If we plot the number of sightings reported over the last century, we can see that before 1950 this number is negligible, however, we can see a rapid increase in the numbers after around 1985. This could be attributed to easier access to communication channels with the advancement of technology, and also the fact that NUFORC was established in 1974, and since then has provided a 24-hour hotline phone number for people to report UFO activity that is currently going on in their area
+
+```{r, message=FALSE, warning=FALSE}
+
+ufo %>%
+  filter(!is.na(datetime),
+         !is.na(city)) %>%
+  mutate(country = recode(country,
+                          "au" = "Australia",
+                          "ca" = "Canada",
+                          "gb" = "UK",
+                          "de" = "Germany",
+                          "us" = "United States"
+                          )) %>%
+  ggplot() +
+  geom_bar(aes(x = country), color = "aquamarine4", fill = "aquamarine3") +
+  labs(x = "Country", y = "Count", 
+       title = "Fig: Country-wise distribution of UFO sightings")
+```
+\vspace{12pt}  
+It's quite clear from this barplot that United States has more reported sightings than any other country. Hence it's worth checking out the distribution of sightings across United States.
+
+
+```{r, message=FALSE, warning=FALSE}
+ufo_us <- ufo %>%
+  filter(country == "us") %>%
+  filter(`duration (seconds)` > 0) %>%
+  filter(latitude < 50 & latitude > 23  )
+states <- map_data("state")
+ggplot() +
+  geom_polygon(data = states, aes(x = long, y = lat, group = group), color = "black", 
+               fill = "white") +
+  geom_point(data = ufo_us, aes(x = as.numeric(longitude), y = as.numeric(latitude)),
+             alpha = 0.05,
+             color = "red")+
+  coord_map()+
+  labs(x = "Longitude", y = "Latitude", title = "Fig: UFO Sightings across USA")
+```
+
+If we plot the locations on the USA map where UFO sightings were reported. The density of the points is highest on the eastern side, i.e., most of the sigtings seem to have been reported from the Eastern parts of USA.
